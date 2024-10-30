@@ -23,6 +23,9 @@ unsigned long lastBlinkTime = 0;
 unsigned long blinkInterval = 5000;  // Random blink every ~5 seconds
 bool blink = false;
 
+// Variables for vertical movement behavior
+bool movingUp = true;
+
 void setup() {
   Serial.begin(9600);
 
@@ -43,15 +46,6 @@ void loop() {
     // If we receive a blink command
     if (data.equals("blink")) {
       blink = true;
-    } else {
-      // Parse the Y position
-      int y_pos = data.toInt();
-
-      // Map Y position to pulse range for vertical servo
-      int targetVerticalPulse = map(y_pos, 0, 180, verticalMin, verticalMax);
-
-      // Move the eye servo smoothly to the new position
-      smoothMoveTo(vertical_channel, targetVerticalPulse, vertical_currentPulse);
     }
   }
 
@@ -62,6 +56,21 @@ void loop() {
     blinkInterval = random(3000, 7000);  // Random interval between 3 and 7 seconds
     blink = false;
   }
+
+  // Handle constant up and down movement
+  if (movingUp) {
+    vertical_currentPulse++;
+    if (vertical_currentPulse >= verticalMax) {
+      movingUp = false;
+    }
+  } else {
+    vertical_currentPulse--;
+    if (vertical_currentPulse <= verticalMin) {
+      movingUp = true;
+    }
+  }
+  pca9685.setPWM(vertical_channel, 0, vertical_currentPulse);
+  delay(10);  // Adjust delay for movement speed
 }
 
 // Function to blink the eye by moving the blink servo smoothly

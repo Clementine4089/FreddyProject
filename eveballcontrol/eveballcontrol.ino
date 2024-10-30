@@ -14,8 +14,8 @@ const int blinkMin = 630;
 const int blinkMax = 450;
 const int verticalMin = 150;
 const int verticalMax = 300;
-const int diagonalMin = 300;
-const int diagonalMax = 420;
+const int diagonalMin = 320;
+const int diagonalMax = 400;
 
 // Variables to hold the current pulse positions of the servos
 int blink_currentPulse = blinkMax;    // Start with the eye open (blinkMax)
@@ -115,9 +115,9 @@ void moveEyeSideToSide() {
 
   if (millis() - lastMoveTime > moveInterval) {
     if (movingRight) {
-      smoothMoveTo(diagonal_channel, diagonalMax, diagonal_currentPulse);
+      smoothMoveTo(diagonal_channel, diagonalMax, 5, diagonal_currentPulse);
     } else {
-      smoothMoveTo(diagonal_channel, diagonalMin, diagonal_currentPulse);
+      smoothMoveTo(diagonal_channel, diagonalMin, 5, diagonal_currentPulse);
     }
     movingRight = !movingRight;
     lastMoveTime = millis();
@@ -131,5 +131,13 @@ void smoothMoveTo(int channel, int targetPulse, int &currentPulse) {
     currentPulse += step;  // Move in steps of 1 unit
     pca9685.setPWM(channel, 0, currentPulse);  // Update the servo position
     delay(1);  // Control movement speed (adjust delay for faster/slower movement)
+  }
+}
+void smoothMoveTo(int channel, int targetPulse, int speed, int &currentPulse) {
+  int step = (targetPulse > currentPulse) ? 1 : -1;  // Determine the direction of movement
+  while (currentPulse != targetPulse) {
+    currentPulse += step;  // Move in steps of 1 unit
+    pca9685.setPWM(channel, 0, currentPulse);  // Update the servo position
+    delay(speed);  // Control movement speed (adjust delay for faster/slower movement)
   }
 }

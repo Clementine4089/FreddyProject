@@ -11,11 +11,11 @@ const int vertical_channel = 2; // Vertical (Y) movement servo channel
 
 // Servo pulse range limits
 const int blinkMin = 630;
-const int blinkMax = 450;
+const int blinkMax = 380;
 const int verticalMin = 150;
-const int verticalMax = 300;
-const int horizontalMin = 320;
-const int horizontalMax = 400;
+const int verticalMax = 230;
+const int horizontalMin = 300;
+const int horizontalMax = 430;
 
 // Variables to hold the current pulse positions of the servos
 int blink_currentPulse = blinkMax;    // Start with the eye open (blinkMax)
@@ -49,10 +49,11 @@ void setup() {
 }
 
 void loop() {
+  pca9685.setPWM(15, 0, 500);
   // Check for incoming serial data to control X and Y movement
   if (Serial.available()) {
     String data = Serial.readStringUntil('\n');
-
+    Serial.println(data);
     // Parse the X and Y positions
     int commaIndex = data.indexOf(',');
     if (commaIndex != -1) {
@@ -115,7 +116,8 @@ void moveEyeSideToSide() {
   static bool movingRight = true;
   static unsigned long lastMoveTime = 0;
   const unsigned long moveInterval = 1000;  // Move every 1 second
-
+  int targerVerticalPulse = (verticalMax - verticalMin) / 2 + verticalMin;
+  smoothMoveTo(vertical_channel, targerVerticalPulse, 10, vertical_currentPulse);
   if (millis() - lastMoveTime > moveInterval) {
     int targetHorizontalPulse = movingRight ? horizontalMax : horizontalMin;
 

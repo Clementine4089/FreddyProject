@@ -6,7 +6,7 @@ Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver();
 
 // Servo channel assignments
 const int blink_channel = 0;    // Blink servo channel
-const int diagonal_channel = 1; // Diagonal movement servo channel (takes the function y=1/2x)
+const int horizontal_channel = 1; // Horizontal movement servo channel
 const int vertical_channel = 2; // Vertical (Y) movement servo channel
 
 // Servo pulse range limits
@@ -14,21 +14,18 @@ const int blinkMin = 630;
 const int blinkMax = 450;
 const int verticalMin = 150;
 const int verticalMax = 300;
-const int diagonalMin = 320;
-const int diagonalMax = 400;
+const int horizontalMin = 320;
+const int horizontalMax = 400;
 
 // Variables to hold the current pulse positions of the servos
 int blink_currentPulse = blinkMax;    // Start with the eye open (blinkMax)
 int vertical_currentPulse = (verticalMax - verticalMin) / 2 + verticalMin;      // Center position for vertical servo
-int diagonal_currentPulse = (diagonalMax - diagonalMin) / 2 + diagonalMin;     // Center position for diagonal servo
+int horizontal_currentPulse = (horizontalMax - horizontalMin) / 2 + horizontalMin;     // Center position for horizontal servo
 
 // Variables for blinking behavior
 unsigned long lastBlinkTime = 0;
 unsigned long blinkInterval = 5000;  // Random blink every ~5 seconds
 bool blink = false;
-
-// Proportionality constant for diagonal movement
-const float m = 0.5;
 
 // Screen dimensions (example values, adjust as needed)
 const int screenWidth = 640;
@@ -48,7 +45,7 @@ void setup() {
   // Initialize the servos to their default positions
   pca9685.setPWM(blink_channel, 0, blink_currentPulse);
   pca9685.setPWM(vertical_channel, 0, vertical_currentPulse);
-  pca9685.setPWM(diagonal_channel, 0, diagonal_currentPulse);
+  pca9685.setPWM(horizontal_channel, 0, horizontal_currentPulse);
 }
 
 void loop() {
@@ -101,18 +98,15 @@ void blinkEye() {
 // Function to move the eye to a specific screen coordinate
 void moveEyeTo(int x, int y) {
   // Map screen coordinates to servo pulse widths
-  int targetDiagonalPulse = map(x, 0, screenWidth, diagonalMin, diagonalMax);
+  int targetHorizontalPulse = map(x, 0, screenWidth, horizontalMin, horizontalMax);
   int targetVerticalPulse = map(y, 0, screenHeight, verticalMin, verticalMax);
 
-  // Adjust vertical pulse based on diagonal movement
-  targetVerticalPulse += m * (targetDiagonalPulse - diagonal_currentPulse);
-
   // Ensure the target pulses are within bounds
-  targetDiagonalPulse = constrain(targetDiagonalPulse, diagonalMin, diagonalMax);
+  targetHorizontalPulse = constrain(targetHorizontalPulse, horizontalMin, horizontalMax);
   targetVerticalPulse = constrain(targetVerticalPulse, verticalMin, verticalMax);
 
   // Move the servos smoothly to the target positions
-  smoothMoveTo(diagonal_channel, targetDiagonalPulse, diagonal_currentPulse);
+  smoothMoveTo(horizontal_channel, targetHorizontalPulse, horizontal_currentPulse);
   smoothMoveTo(vertical_channel, targetVerticalPulse, vertical_currentPulse);
 }
 
@@ -123,16 +117,13 @@ void moveEyeSideToSide() {
   const unsigned long moveInterval = 1000;  // Move every 1 second
 
   if (millis() - lastMoveTime > moveInterval) {
-    int targetDiagonalPulse = movingRight ? diagonalMax : diagonalMin;
-    int targetVerticalPulse = vertical_currentPulse + m * (targetDiagonalPulse - diagonal_currentPulse);
+    int targetHorizontalPulse = movingRight ? horizontalMax : horizontalMin;
 
-    // Ensure the target pulses are within bounds
-    targetDiagonalPulse = constrain(targetDiagonalPulse, diagonalMin, diagonalMax);
-    targetVerticalPulse = constrain(targetVerticalPulse, verticalMin, verticalMax);
+    // Ensure the target pulse is within bounds
+    targetHorizontalPulse = constrain(targetHorizontalPulse, horizontalMin, horizontalMax);
 
-    // Move the servos smoothly to the target positions
-    smoothMoveTo(diagonal_channel, targetDiagonalPulse, 10, diagonal_currentPulse);
-    smoothMoveTo(vertical_channel, targetVerticalPulse, 10, vertical_currentPulse);
+    // Move the servo smoothly to the target position
+    smoothMoveTo(horizontal_channel, targetHorizontalPulse, 10, horizontal_currentPulse);
 
     movingRight = !movingRight;
     lastMoveTime = millis();

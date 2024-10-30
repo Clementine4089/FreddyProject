@@ -39,6 +39,10 @@ def main():
 
     cap = cv2.VideoCapture(args.camera_idx)
 
+    ser.write_timeout = 1  # Set a write timeout
+    ser.timeout = 1        # Set a read timeout
+
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -57,8 +61,12 @@ def main():
             center_x = (face.bbox.xmin + face.bbox.xmax)
             center_y = (face.bbox.ymin + face.bbox.ymax)
 
-            # Send X and Y coordinates to Arduino
-            ser.write(f'{center_x},{center_y},\n'.encode())
+            try:
+                ser.write(f'{center_x},{center_y},\n'.encode())
+            except serial.SerialTimeoutException:
+                print("Serial write timeout occurred")
+            except serial.SerialException as e:
+                print(f"Serial communication error: {e}")
 
         else:
             ser.write(b'No target found\n')

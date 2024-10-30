@@ -57,12 +57,8 @@ def main():
             center_x = (face.bbox.xmin + face.bbox.xmax) / 2
             center_y = (face.bbox.ymin + face.bbox.ymax) / 2
 
-            # Scale X and Y coordinates to range 0-180 for servos
-            scaled_x = int(center_x / inference_size[0] * 180)
-            scaled_y = int(center_y / inference_size[1] * 180)
-
             # Send X and Y coordinates to Arduino
-            ser.write(f'{scaled_x},{scaled_y}\n'.encode())
+            ser.write(f'{center_x},{center_y}\n'.encode())
 
             # Randomly trigger a blink
             if random.random() < 0.1:  # 10% chance to blink

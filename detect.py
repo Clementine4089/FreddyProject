@@ -54,11 +54,11 @@ def main():
         # If face detected, send coordinates to Arduino
         if objs:
             face = objs[0]  # Taking the first detected face
-            center_x = (face.bbox.xmin + face.bbox.xmax) / 2
-            center_y = (face.bbox.ymin + face.bbox.ymax) / 2
+            center_x = (face.bbox.xmin + face.bbox.xmax)
+            center_y = (face.bbox.ymin + face.bbox.ymax)
 
             # Send X and Y coordinates to Arduino
-            ser.write(f'{center_x},{center_y}\n'.encode())
+            ser.write(f'{center_x},{center_y},\n'.encode())
 
         else:
             ser.write(b'No target found\n')

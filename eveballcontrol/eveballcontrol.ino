@@ -6,7 +6,6 @@ Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver();
 
 // Servo channel assignments
 const int blink_channel = 0;    // Blink servo channel
-const int diagonal_channel = 1; // Diagonal (X) movement servo channel
 const int vertical_channel = 2; // Vertical (Y) movement servo channel
 
 // Servo pulse range limits
@@ -14,13 +13,10 @@ const int blinkMin = 630;
 const int blinkMax = 450;
 const int verticalMin = 150;
 const int verticalMax = 300;
-const int diagonalMin = 400;
-const int diagonalMax = 500;
 
 // Variables to hold the current pulse positions of the servos
 int blink_currentPulse = blinkMax;    // Start with the eye open (blinkMax)
 int vertical_currentPulse = 225;      // Center position for vertical servo
-int diagonal_currentPulse = 450;      // Center position for diagonal servo
 
 // Variables for blinking behavior
 unsigned long lastBlinkTime = 0;
@@ -36,12 +32,11 @@ void setup() {
 
   // Move servos to default (centered) positions
   smoothMoveTo(blink_channel, blinkMax, blink_currentPulse); // Open the blink servo
-  smoothMoveTo(diagonal_channel, diagonal_currentPulse, diagonal_currentPulse); // Center diagonal servo
   smoothMoveTo(vertical_channel, vertical_currentPulse, vertical_currentPulse); // Center vertical servo
 }
 
 void loop() {
-  // Check for incoming serial data to control X and Y movement
+  // Check for incoming serial data to control Y movement
   if (Serial.available()) {
     String data = Serial.readStringUntil('\n');
 
@@ -49,23 +44,14 @@ void loop() {
     if (data.equals("blink")) {
       blink = true;
     } else {
-      // Parse the X and Y positions
-      int commaIndex = data.indexOf(',');
-      if (commaIndex != -1) {
-        String xStr = data.substring(0, commaIndex);
-        String yStr = data.substring(commaIndex + 1);
+      // Parse the Y position
+      int y_pos = data.toInt();
 
-        int x_pos = xStr.toInt();
-        int y_pos = yStr.toInt();
+      // Map Y position to pulse range for vertical servo
+      int targetVerticalPulse = map(y_pos, 0, 180, verticalMin, verticalMax);
 
-        // Map X and Y positions to pulse ranges for diagonal and vertical servos
-        int targetDiagonalPulse = map(x_pos, 0, 180, diagonalMin, diagonalMax);
-        int targetVerticalPulse = map(y_pos, 0, 180, verticalMin, verticalMax);
-
-        // Move the eye servos smoothly to the new positions
-        smoothMoveTo(diagonal_channel, targetDiagonalPulse, diagonal_currentPulse);
-        smoothMoveTo(vertical_channel, targetVerticalPulse, vertical_currentPulse);
-      }
+      // Move the eye servo smoothly to the new position
+      smoothMoveTo(vertical_channel, targetVerticalPulse, vertical_currentPulse);
     }
   }
 

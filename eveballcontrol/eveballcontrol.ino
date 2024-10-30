@@ -34,6 +34,10 @@ const float m = 0.5;
 const int screenWidth = 640;
 const int screenHeight = 480;
 
+// Variables for tracking target presence
+unsigned long lastTargetTime = 0;
+const unsigned long targetTimeout = 2000;  // 2 seconds timeout
+
 void setup() {
   Serial.begin(9600);  // Initialize serial communication
   pca9685.begin();     // Initialize the PCA9685 controller
@@ -63,10 +67,15 @@ void loop() {
 
       // Move the servos based on the parsed X and Y positions
       moveEyeTo(x, y);
-      
+
+      // Update the last target time
+      lastTargetTime = millis();
     }
-  } else {
-    // If no coordinates, move eye side to side
+  }
+
+  // Check if the target timeout has been reached
+  if (millis() - lastTargetTime > targetTimeout) {
+    // If no target for 2 seconds, move eye side to side
     moveEyeSideToSide();
   }
 
@@ -114,11 +123,17 @@ void moveEyeSideToSide() {
   const unsigned long moveInterval = 1000;  // Move every 1 second
 
   if (millis() - lastMoveTime > moveInterval) {
-    if (movingRight) {
-      smoothMoveTo(diagonal_channel, diagonalMax, 5, diagonal_currentPulse);
-    } else {
-      smoothMoveTo(diagonal_channel, diagonalMin, 5, diagonal_currentPulse);
-    }
+    int targetDiagonalPulse = movingRight ? diagonalMax : diagonalMin;
+    int targetVerticalPulse = vertical_currentPulse + m * (targetDiagonalPulse - diagonal_currentPulse);
+
+    // Ensure the target pulses are within bounds
+    targetDiagonalPulse = constrain(targetDiagonalPulse, diagonalMin, diagonalMax);
+    targetVerticalPulse = constrain(targetVerticalPulse, verticalMin, verticalMax);
+
+    // Move the servos smoothly to the target positions
+    smoothMoveTo(diagonal_channel, targetDiagonalPulse, 10, diagonal_currentPulse);
+    smoothMoveTo(vertical_channel, targetVerticalPulse, 10, vertical_currentPulse);
+
     movingRight = !movingRight;
     lastMoveTime = millis();
   }
@@ -133,6 +148,7 @@ void smoothMoveTo(int channel, int targetPulse, int &currentPulse) {
     delay(1);  // Control movement speed (adjust delay for faster/slower movement)
   }
 }
+
 void smoothMoveTo(int channel, int targetPulse, int speed, int &currentPulse) {
   int step = (targetPulse > currentPulse) ? 1 : -1;  // Determine the direction of movement
   while (currentPulse != targetPulse) {

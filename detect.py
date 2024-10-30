@@ -60,10 +60,6 @@ def main():
             # Send X and Y coordinates to Arduino
             ser.write(f'{center_x},{center_y}\n'.encode())
 
-            # Randomly trigger a blink
-            if random.random() < 0.1:  # 10% chance to blink
-                ser.write(b'blink\n')
-
         else:
             ser.write(b'No target found\n')
 

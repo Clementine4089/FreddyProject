@@ -52,22 +52,18 @@ void loop() {
   if (Serial.available()) {
     String data = Serial.readStringUntil('\n');
 
-    // If we receive a blink command
-    if (data.equals("blink")) {
-      blink = true;
-    } else {
-      // Parse the X and Y positions
-      int commaIndex = data.indexOf(',');
-      if (commaIndex != -1) {
-        String xStr = data.substring(0, commaIndex);
-        String yStr = data.substring(commaIndex + 1);
+    // Parse the X and Y positions
+    int commaIndex = data.indexOf(',');
+    if (commaIndex != -1) {
+      String xStr = data.substring(0, commaIndex);
+      String yStr = data.substring(commaIndex + 1);
 
-        int x = xStr.toInt();
-        int y = yStr.toInt();
+      int x = xStr.toInt();
+      int y = yStr.toInt();
 
-        // Move the servos based on the parsed X and Y positions
-        moveEyeTo(x, y);
-      }
+      // Move the servos based on the parsed X and Y positions
+      moveEyeTo(x, y);
+      
     }
   } else {
     // If no coordinates, move eye side to side

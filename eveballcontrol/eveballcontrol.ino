@@ -7,16 +7,20 @@ Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver();
 // Servo channel assignments
 const int blink_channel = 0;    // Blink servo channel
 const int vertical_channel = 2; // Vertical (Y) movement servo channel
+const int diagonal_channel = 1; // Diagonal movement servo channel
 
 // Servo pulse range limits
 const int blinkMin = 630;
 const int blinkMax = 450;
 const int verticalMin = 150;
 const int verticalMax = 300;
+const int diagonalMin = 150;
+const int diagonalMax = 300;
 
 // Variables to hold the current pulse positions of the servos
 int blink_currentPulse = blinkMax;    // Start with the eye open (blinkMax)
 int vertical_currentPulse = 225;      // Center position for vertical servo
+int diagonal_currentPulse = 225;      // Center position for diagonal servo
 
 // Variables for blinking behavior
 unsigned long lastBlinkTime = 0;
@@ -25,6 +29,9 @@ bool blink = false;
 
 // Variables for vertical movement behavior
 bool movingUp = true;
+
+// Variables for diagonal movement behavior
+bool movingDiagonalUp = true;
 
 void setup() {
   Serial.begin(9600);
@@ -36,6 +43,7 @@ void setup() {
   // Move servos to default (centered) positions
   smoothMoveTo(blink_channel, blinkMax, blink_currentPulse); // Open the blink servo
   smoothMoveTo(vertical_channel, vertical_currentPulse, vertical_currentPulse); // Center vertical servo
+  smoothMoveTo(diagonal_channel, diagonal_currentPulse, diagonal_currentPulse); // Center diagonal servo
 }
 
 void loop() {
@@ -57,7 +65,7 @@ void loop() {
     blink = false;
   }
 
-  // Handle constant up and down movement
+  // Handle constant up and down movement for vertical servo
   if (movingUp) {
     vertical_currentPulse++;
     if (vertical_currentPulse >= verticalMax) {
@@ -70,6 +78,21 @@ void loop() {
     }
   }
   pca9685.setPWM(vertical_channel, 0, vertical_currentPulse);
+
+  // Handle constant up and down movement for diagonal servo
+  if (movingDiagonalUp) {
+    diagonal_currentPulse++;
+    if (diagonal_currentPulse >= diagonalMax) {
+      movingDiagonalUp = false;
+    }
+  } else {
+    diagonal_currentPulse--;
+    if (diagonal_currentPulse <= diagonalMin) {
+      movingDiagonalUp = true;
+    }
+  }
+  pca9685.setPWM(diagonal_channel, 0, diagonal_currentPulse);
+
   delay(10);  // Adjust delay for movement speed
 }
 

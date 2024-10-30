@@ -6,7 +6,7 @@ Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver();
 
 // Servo channel assignments
 const int blink_channel = 0;    // Blink servo channel
-const int diagonal_channel = 1; // Diagonal movement servo channel
+const int diagonal_channel = 1; // Diagonal movement servo channel (takes the function y=1/2x)
 const int vertical_channel = 2; // Vertical (Y) movement servo channel
 
 // Servo pulse range limits
@@ -14,17 +14,25 @@ const int blinkMin = 630;
 const int blinkMax = 450;
 const int verticalMin = 150;
 const int verticalMax = 300;
-const int diagonalMin = 400;
-const int diagonalMax = 500;
+const int diagonalMin = 300;
+const int diagonalMax = 420;
+
 // Variables to hold the current pulse positions of the servos
 int blink_currentPulse = blinkMax;    // Start with the eye open (blinkMax)
-int vertical_currentPulse = (verticalMax - verticalMin) / 2;      // Center position for vertical servo
-int diagonal_currentPulse = (diagonalMax - diagonalMin) / 2;     // Center position for diagonal servo
+int vertical_currentPulse = (verticalMax - verticalMin) / 2 + verticalMin;      // Center position for vertical servo
+int diagonal_currentPulse = (diagonalMax - diagonalMin) / 2 + diagonalMin;     // Center position for diagonal servo
 
 // Variables for blinking behavior
 unsigned long lastBlinkTime = 0;
 unsigned long blinkInterval = 5000;  // Random blink every ~5 seconds
 bool blink = false;
+
+// Proportionality constant for diagonal movement
+const float m = 0.5;
+
+// Screen dimensions (example values, adjust as needed)
+const int screenWidth = 640;
+const int screenHeight = 480;
 
 void setup() {
   Serial.begin(9600);  // Initialize serial communication
@@ -40,25 +48,39 @@ void setup() {
 }
 
 void loop() {
-  // Check for incoming serial data to control Y movement
+  // Check for incoming serial data to control X and Y movement
   if (Serial.available()) {
     String data = Serial.readStringUntil('\n');
 
     // If we receive a blink command
     if (data.equals("blink")) {
       blink = true;
+    } else {
+      // Parse the X and Y positions
+      int commaIndex = data.indexOf(',');
+      if (commaIndex != -1) {
+        String xStr = data.substring(0, commaIndex);
+        String yStr = data.substring(commaIndex + 1);
+
+        int x = xStr.toInt();
+        int y = yStr.toInt();
+
+        // Move the servos based on the parsed X and Y positions
+        moveEyeTo(x, y);
+      }
     }
+  } else {
+    // If no coordinates, move eye side to side
+    moveEyeSideToSide();
   }
 
   // Handle random blinking
   if (blink || millis() - lastBlinkTime > blinkInterval) {
-//    /blinkEye();
+    blinkEye();
     lastBlinkTime = millis();
     blinkInterval = random(3000, 7000);  // Random interval between 3 and 7 seconds
     blink = false;
-    moveEyeUp();
   }
-
 }
 
 // Function to blink the eye by moving the blink servo smoothly
@@ -71,21 +93,39 @@ void blinkEye() {
   smoothMoveTo(blink_channel, blinkMax, blink_currentPulse);
 }
 
+// Function to move the eye to a specific screen coordinate
+void moveEyeTo(int x, int y) {
+  // Map screen coordinates to servo pulse widths
+  int targetDiagonalPulse = map(x, 0, screenWidth, diagonalMin, diagonalMax);
+  int targetVerticalPulse = map(y, 0, screenHeight, verticalMin, verticalMax);
 
-// Function to blink the eye by moving the blink servo smoothly
-void moveEyeUp() {
-  // Close the eye
-  smoothMoveTo(vertical_channel, verticalMin, vertical_currentPulse);
-  delay(200);  // Keep eyelid closed for 200ms
+  // Adjust vertical pulse based on diagonal movement
+  targetVerticalPulse += m * (targetDiagonalPulse - diagonal_currentPulse);
 
-  // Open the eye
-  smoothMoveTo(vertical_channel, verticalMax, vertical_currentPulse);
+  // Ensure the target pulses are within bounds
+  targetDiagonalPulse = constrain(targetDiagonalPulse, diagonalMin, diagonalMax);
+  targetVerticalPulse = constrain(targetVerticalPulse, verticalMin, verticalMax);
+
+  // Move the servos smoothly to the target positions
+  smoothMoveTo(diagonal_channel, targetDiagonalPulse, diagonal_currentPulse);
+  smoothMoveTo(vertical_channel, targetVerticalPulse, vertical_currentPulse);
 }
 
-void moveEyeDiagonal() {
-  smoothMoveTo(diagonal_channel, diagonalMin, diagonal_currentPulse);
-  delay(200);
-  smoothMoveTo(diagonal_channel, diagonalMax, diagonal_currentPulse);
+// Function to move the eye side to side when no target is present
+void moveEyeSideToSide() {
+  static bool movingRight = true;
+  static unsigned long lastMoveTime = 0;
+  const unsigned long moveInterval = 1000;  // Move every 1 second
+
+  if (millis() - lastMoveTime > moveInterval) {
+    if (movingRight) {
+      smoothMoveTo(diagonal_channel, diagonalMax, diagonal_currentPulse);
+    } else {
+      smoothMoveTo(diagonal_channel, diagonalMin, diagonal_currentPulse);
+    }
+    movingRight = !movingRight;
+    lastMoveTime = millis();
+  }
 }
 
 // Function to move a servo smoothly to a target pulse width

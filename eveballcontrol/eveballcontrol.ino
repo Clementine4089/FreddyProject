@@ -26,6 +26,18 @@ unsigned long lastBlinkTime = 0;
 unsigned long blinkInterval = 5000;  // Random blink every ~5 seconds
 bool blink = false;
 
+void setup() {
+  Serial.begin(9600);  // Initialize serial communication
+  pca9685.begin();     // Initialize the PCA9685 controller
+
+  // Set the PWM frequency to 50Hz (standard for servos)
+  pca9685.setPWMFreq(50);
+
+  // Initialize the servos to their default positions
+  pca9685.setPWM(blink_channel, 0, blink_currentPulse);
+  pca9685.setPWM(vertical_channel, 0, vertical_currentPulse);
+  pca9685.setPWM(diagonal_channel, 0, diagonal_currentPulse);
+}
 
 void loop() {
   // Check for incoming serial data to control Y movement

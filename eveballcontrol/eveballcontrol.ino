@@ -149,4 +149,4 @@ void smoothMoveTo(int channel, int targetPulse, int speed, int &currentPulse) {
     pca9685.setPWM(channel, 0, currentPulse);  // Update the servo position
     delay(speed);  // Control movement speed (adjust delay for faster/slower movement)
   }
-}
+}1` 

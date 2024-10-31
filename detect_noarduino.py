@@ -174,7 +174,7 @@ def main():
         else:
             # If no target for 2 seconds, move eye side to side
             if current_time - last_target_time > target_timeout:
-                horizontal_target_angle, horizontal_target_angle2 = moveEyeSideToSide(horizontal_current_angle)
+                horizontal_target_angle, horizontal_target_angle2, moving_right = moveEyeSideToSide(horizontal_current_angle, moving_right)
                 vertical_target_angle = 90
                 vertical_target_angle2 = 90
 
@@ -272,8 +272,7 @@ def append_objs_to_img(cv2_im, inference_size, objs, labels):
                              cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
     return cv2_im
 
-def moveEyeSideToSide(horizontal_current_angle):
-    global moving_right
+def moveEyeSideToSide(horizontal_current_angle, moving_right):
     if moving_right:
         horizontal_target_angle = 180
         horizontal_target_angle2 = 180
@@ -282,7 +281,7 @@ def moveEyeSideToSide(horizontal_current_angle):
         horizontal_target_angle2 = 0
     if horizontal_current_angle == 180:
         moving_right = False
-    return horizontal_target_angle, horizontal_target_angle2
+    return horizontal_target_angle, horizontal_target_angle2, moving_right
 
 if __name__ == '__main__':
     main()

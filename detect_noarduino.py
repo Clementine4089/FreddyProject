@@ -174,13 +174,9 @@ def main():
         else:
             # If no target for 2 seconds, move eye side to side
             if current_time - last_target_time > target_timeout:
-                # Update target angles for idle movement
-                if current_time - last_move_time > move_interval:
-                    horizontal_target_angle = 180 if moving_right else 0
-                    horizontal_target_angle2 = 180 if moving_right else 0
-                    moving_right = not moving_right
-                    last_move_time = current_time
-                vertical_target_angle = 90  # Center position
+                horizontal_target_angle, horizontal_target_angle2 = moveEyeSideToSide(horizontal_current_angle)
+                vertical_target_angle = 90
+                vertical_target_angle2 = 90
 
         # Smoothly update servo positions towards target angles
         horizontal_current_angle = update_servo_angle(
@@ -275,6 +271,18 @@ def append_objs_to_img(cv2_im, inference_size, objs, labels):
         cv2_im = cv2.putText(cv2_im, label, (x0, y0 + 30),
                              cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
     return cv2_im
+
+def moveEyeSideToSide(horizontal_current_angle):
+    global moving_right
+    if moving_right:
+        horizontal_target_angle = 180
+        horizontal_target_angle2 = 180
+    else:
+        horizontal_target_angle = 0
+        horizontal_target_angle2 = 0
+    if horizontal_current_angle == 180:
+        moving_right = False
+    return horizontal_target_angle, horizontal_target_angle2
 
 if __name__ == '__main__':
     main()

@@ -171,10 +171,11 @@ def main():
 
             # Update the last target time
             last_target_time = current_time
+            servo_move_speed = 300
         else:
             # If no target for 2 seconds, move eye side to side
             if current_time - last_target_time > target_timeout:
-                horizontal_target_angle, horizontal_target_angle2, moving_right = moveEyeSideToSide(horizontal_current_angle, moving_right)
+                horizontal_target_angle, horizontal_target_angle2, moving_right, servo_move_speed = moveEyeSideToSide(horizontal_current_angle, moving_right)
                 vertical_target_angle = 90
                 vertical_target_angle2 = 90
                 print("No target detected. Moving eyes side to side.")
@@ -286,7 +287,7 @@ def moveEyeSideToSide(horizontal_current_angle, moving_right):
         moving_right = False
     elif horizontal_current_angle == 0:
         moving_right = True
-    return horizontal_target_angle, horizontal_target_angle2, moving_right
+    return horizontal_target_angle, horizontal_target_angle2, moving_right, 40
 
 if __name__ == '__main__':
     main()

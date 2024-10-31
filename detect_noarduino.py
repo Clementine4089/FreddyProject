@@ -179,6 +179,7 @@ def main():
                 vertical_target_angle2 = 90
                 print("No target detected. Moving eyes side to side.")
                 print("horizontal_target_angle: ", horizontal_target_angle)
+                print("current_angle: ", horizontal_current_angle)
 
         # Smoothly update servo positions towards target angles
         horizontal_current_angle = update_servo_angle(

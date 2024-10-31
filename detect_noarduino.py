@@ -284,6 +284,8 @@ def moveEyeSideToSide(horizontal_current_angle, moving_right):
         horizontal_target_angle2 = 0
     if horizontal_current_angle == 180:
         moving_right = False
+    elif horizontal_current_angle == 0:
+        moving_right = True
     return horizontal_target_angle, horizontal_target_angle2, moving_right
 
 if __name__ == '__main__':

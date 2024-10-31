@@ -17,7 +17,10 @@ def map_range(value, in_min, in_max, out_min, out_max):
     # Helper function to map a value from one range to another
     return out_min + (float(value - in_min) / (in_max - in_min)) * (out_max - out_min)
 
+# Check if display is available
+
 def main():
+	
     default_model_dir = '/home/pi/tflite_models'
     default_model = 'ssd_mobilenet_v2_face_quant_postprocess_edgetpu.tflite'
     default_labels = 'coco_labels.txt'
@@ -91,6 +94,9 @@ def main():
     horizontal_target_angle = horizontal_current_angle
     vertical_target_angle = vertical_current_angle
     servo_move_speed = 200  # degrees per second
+    
+    display_available = os.environ.get('DISPLAY') is not None
+
 
     cap = cv2.VideoCapture(args.camera_idx)
     if not cap.isOpened():
@@ -163,8 +169,8 @@ def main():
         elif current_time - last_blink_time > blink_interval:
             blinking = True
             blink_stage = 1  # Start closing eyelid
-
-        cv2.imshow('frame', cv2_im)
+        if display_available:
+            cv2.imshow('frame', cv2_im)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 

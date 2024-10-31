@@ -201,7 +201,8 @@ def main():
             blink_current_angle, blink_stage = handle_blinking(
                 blink_servo, blink_current_angle, blink_stage, dt
             )
-            blink_current_angle2, blink_stage = handle_blinking(
+            dummy = blink_stage
+            blink_current_angle2, dummy = handle_blinking(
                 blink_servo2, blink_current_angle2, blink_stage, dt
             )
             if blink_stage == 0:

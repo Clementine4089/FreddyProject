@@ -51,29 +51,54 @@ def main():
     blink_channel = 0    # Blink servo channel
     horizontal_channel = 1  # Horizontal movement servo channel
     vertical_channel = 2    # Vertical movement servo channel
+    
+    blink_channel2 = 3    # Blink servo channel
+    horizontal_channel2 = 4  # Horizontal movement servo channel
+    vertical_channel2 = 5    # Vertical movement servo channel
 
     # Servo pulse range limits (in microseconds)
     blinkMin_pulse =  00  
-    blinkMax_pulse = 1200  
+    blinkMax_pulse = 1200 
+    blinkMin_pulse2 =  00
+    blinkMax_pulse2 = 1200
+     
     verticalMin_pulse = 732
     verticalMax_pulse = 1122
+    verticalMin_pulse2 = 732
+    verticalMax_pulse2 = 1122
+    
     horizontalMin_pulse = 1464
     horizontalMax_pulse = 2100
+    horizontalMin_pulse2 = 1464
+    horizontalMax_pulse2 = 2100
 
     # Create servo objects with custom pulse widths
     blink_servo = servo.Servo(pca.channels[blink_channel], min_pulse=blinkMin_pulse, max_pulse=blinkMax_pulse)
+    blink_servo2 = servo.Servo(pca.channels[blink_channel2], min_pulse=blinkMin_pulse2, max_pulse=blinkMax_pulse2)
+    
     vertical_servo = servo.Servo(pca.channels[vertical_channel], min_pulse=verticalMin_pulse, max_pulse=verticalMax_pulse)
+    vertical_servo2 = servo.Servo(pca.channels[vertical_channel2], min_pulse=verticalMin_pulse2, max_pulse=verticalMax_pulse2)
+    
     horizontal_servo = servo.Servo(pca.channels[horizontal_channel], min_pulse=horizontalMin_pulse, max_pulse=horizontalMax_pulse)
+    horizontal_servo2 = servo.Servo(pca.channels[horizontal_channel2], min_pulse=horizontalMin_pulse2, max_pulse=horizontalMax_pulse2)
 
     # Initialize servo positions
     blink_servo.angle = 0  # Eye open
     vertical_servo.angle = 90  # Center position
     horizontal_servo.angle = 90  # Center position
+    
+    blink_servo2.angle = 0  # Eye open
+    vertical_servo2.angle = 90  # Center position
+    horizontal_servo2.angle = 90  # Center position
 
     # Variables to hold current servo angles
     blink_current_angle = 0
     vertical_current_angle = 90
     horizontal_current_angle = 90
+    
+    blink_current_angle2 = 0
+    vertical_current_angle2 = 90
+    horizontal_current_angle2 = 90
 
     # Variables for blinking behavior
     last_blink_time = time.time()
@@ -91,8 +116,12 @@ def main():
     move_interval = 1.0  # Move every 1 second
 
     # Variables for smooth servo movements
-    horizontal_target_angle = horizontal_current_angle
+    horizontal_target_angle = horizontal_current_angle   
+    horizontal_target_angle2 = horizontal_current_angle2
+     
     vertical_target_angle = vertical_current_angle
+    vertical_target_angle2 = vertical_current_angle2
+    
     servo_move_speed = 200  # degrees per second
     
     display_available = os.environ.get('DISPLAY') is not None
@@ -136,6 +165,9 @@ def main():
             # Set the target angles based on detected face
             horizontal_target_angle = int(map_range(center_x, 0, screen_width * 2, 0, 180))
             vertical_target_angle = int(map_range(center_y, 0, screen_height * 2, 0, 180))
+            
+            horizontal_target_angle2 = int(map_range(center_x, 0, screen_width * 2, 0, 180))
+            vertical_target_angle2 = int(map_range(center_y, 0, screen_height * 2, 0, 180))
 
             # Update the last target time
             last_target_time = current_time
@@ -145,6 +177,7 @@ def main():
                 # Update target angles for idle movement
                 if current_time - last_move_time > move_interval:
                     horizontal_target_angle = 180 if moving_right else 0
+                    horizontal_target_angle2 = 180 if moving_right else 0
                     moving_right = not moving_right
                     last_move_time = current_time
                 vertical_target_angle = 90  # Center position
@@ -153,14 +186,23 @@ def main():
         horizontal_current_angle = update_servo_angle(
             horizontal_servo, horizontal_current_angle, horizontal_target_angle, dt, servo_move_speed
         )
+        horizontal_current_angle2 = update_servo_angle(
+            horizontal_servo2, horizontal_current_angle2, horizontal_target_angle2, dt, servo_move_speed
+        )
         vertical_current_angle = update_servo_angle(
             vertical_servo, vertical_current_angle, vertical_target_angle, dt, servo_move_speed
+        )
+        vertical_current_angle2 = update_servo_angle(
+            vertical_servo2, vertical_current_angle2, vertical_target_angle2, dt, servo_move_speed
         )
 
         # Handle blinking without blocking
         if blinking:
             blink_current_angle, blink_stage = handle_blinking(
                 blink_servo, blink_current_angle, blink_stage, dt
+            )
+            blink_current_angle2, blink_stage = handle_blinking(
+                blink_servo2, blink_current_angle2, blink_stage, dt
             )
             if blink_stage == 0:
                 blinking = False

@@ -12,15 +12,14 @@ from pycoral.adapters.detect import get_objects
 from pycoral.utils.dataset import read_label_file
 from pycoral.utils.edgetpu import make_interpreter
 from pycoral.utils.edgetpu import run_inference
+import RPi.GPIO as GPIO  # Added for GPIO control
 
 def map_range(value, in_min, in_max, out_min, out_max):
     # Helper function to map a value from one range to another
     return out_min + (float(value - in_min) / (in_max - in_min)) * (out_max - out_min)
 
-# Check if display is available
-
 def main():
-	
+    
     default_model_dir = '/home/pi/tflite_models'
     default_model = 'ssd_mobilenet_v2_face_quant_postprocess_edgetpu.tflite'
     default_labels = 'coco_labels.txt'
@@ -102,7 +101,7 @@ def main():
 
     # Variables for blinking behavior
     last_blink_time = time.time()
-    blink_interval = random.uniform(10, 20)  # Random interval between 3 and 7 seconds
+    blink_interval = random.uniform(10, 20)  # Random interval between 10 and 20 seconds
     blinking = False
     blink_stage = 0  # 0: idle, 1: closing, 2: opening
 
@@ -118,7 +117,7 @@ def main():
     # Variables for smooth servo movements
     horizontal_target_angle = horizontal_current_angle   
     horizontal_target_angle2 = horizontal_current_angle2
-     
+       
     vertical_target_angle = vertical_current_angle
     vertical_target_angle2 = vertical_current_angle2
     
@@ -126,6 +125,26 @@ def main():
     
     display_available = os.environ.get('DISPLAY') is not None
 
+    # Set up GPIO for RGB LED
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    red_pin = 17    # Red anode
+    green_pin = 27  # Green anode
+    blue_pin = 22   # Blue anode
+
+    # Set up the GPIO pins as outputs
+    GPIO.setup(red_pin, GPIO.OUT)
+    GPIO.setup(green_pin, GPIO.OUT)
+    GPIO.setup(blue_pin, GPIO.OUT)
+
+    # Initialize all LEDs to off
+    GPIO.output(red_pin, GPIO.LOW)
+    GPIO.output(green_pin, GPIO.LOW)
+    GPIO.output(blue_pin, GPIO.LOW)
+
+    # Variables for LED flickering
+    last_flicker_time = time.time()
+    flicker_interval = 0.005  # Flicker every 50ms
 
     cap = cv2.VideoCapture(args.camera_idx)
     if not cap.isOpened():
@@ -178,9 +197,6 @@ def main():
                 horizontal_target_angle, horizontal_target_angle2, moving_right, servo_move_speed = moveEyeSideToSide(horizontal_current_angle, moving_right)
                 vertical_target_angle = 90
                 vertical_target_angle2 = 90
-                print("No target detected. Moving eyes side to side.")
-                print("horizontal_target_angle: ", horizontal_target_angle)
-                print("current_angle: ", horizontal_current_angle)
 
         # Smoothly update servo positions towards target angles
         horizontal_current_angle = update_servo_angle(
@@ -208,10 +224,28 @@ def main():
             if blink_stage == 0:
                 blinking = False
                 last_blink_time = current_time
-                blink_interval = random.uniform(3, 7)  # Reset blink interval
+                blink_interval = random.uniform(10, 20)  # Reset blink interval
         elif current_time - last_blink_time > blink_interval:
             blinking = True
             blink_stage = 1  # Start closing eyelid
+
+        # Handle LED flickering
+        if current_time - last_flicker_time > flicker_interval:
+            if objs:
+                choice = random.choice([GPIO.HIGH, GPIO.LOW])
+                GPIO.output(red_pin, choice)
+                GPIO.output(green_pin, choice)
+                GPIO.output(blue_pin, choice)
+            else:
+                GPIO.output(red_pin, GPIO.HIGH)
+                GPIO.output(green_pin, GPIO.HIGH)
+                GPIO.output(blue_pin, GPIO.HIGH)
+            if random.random() < 0.01:  
+                GPIO.output(blue_pin, GPIO.LOW)
+                GPIO.output(green_pin, GPIO.LOW)
+                GPIO.output(red_pin, GPIO.LOW)
+                last_flicker_time = current_time
+
         if display_available:
             cv2.imshow('frame', cv2_im)
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -223,6 +257,7 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
     pca.deinit()
+    GPIO.cleanup()  # Clean up GPIOs
 
 def update_servo_angle(servo_obj, current_angle, target_angle, dt, speed):
     # Calculate the maximum angle change
@@ -283,9 +318,9 @@ def moveEyeSideToSide(horizontal_current_angle, moving_right):
     else:
         horizontal_target_angle = 0
         horizontal_target_angle2 = 0
-    if horizontal_current_angle == 180:
+    if horizontal_current_angle >= 180:
         moving_right = False
-    elif horizontal_current_angle == 0:
+    elif horizontal_current_angle <= 0:
         moving_right = True
     return horizontal_target_angle, horizontal_target_angle2, moving_right, 40
 

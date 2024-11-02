@@ -20,6 +20,8 @@ def map_range(value, in_min, in_max, out_min, out_max):
 
 def main():
     
+    flickerOnFaceDetect = False
+    
     default_model_dir = '/home/pi/tflite_models'
     default_model = 'ssd_mobilenet_v2_face_quant_postprocess_edgetpu.tflite'
     default_labels = 'coco_labels.txt'
@@ -231,7 +233,7 @@ def main():
 
         # Handle LED flickering
         if current_time - last_flicker_time > flicker_interval:
-            if objs:
+            if objs and flickerOnFaceDetect:
                 choice = random.choice([GPIO.HIGH, GPIO.LOW])
                 GPIO.output(red_pin, choice)
                 GPIO.output(green_pin, choice)
